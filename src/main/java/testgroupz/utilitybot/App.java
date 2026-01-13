@@ -2,15 +2,10 @@ package testgroupz.utilitybot;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,28 +19,28 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 public class App extends TelegramLongPollingBot {
 
     private static String api_key = System.getenv("TELEGRAM_API_KEY");
-    private static String weather_api_key = System.getenv("WEATHER_API_KEY"); // Weatherapi.com
-    private StringBuilder url = new StringBuilder("https://api.weatherapi.com/v1/current.json?q=");
     private String notFound = "Stadt nicht gefunden";
     private PropertyChangeSupport changes = new PropertyChangeSupport(this);
     private String currentText = "";
-    private boolean isActive;
+    private boolean isActive = true;
     private HashMap<Long, String> userOptions = new HashMap<>();
     final String enterCity = "Geben sie die Stadt ein!";
     final String enterNewTask = "Geben sie eine neue Task ein!";
     final String enterTaskId = "Geben sie die TaskID zum Löschen ein!";
     private DatabaseAccess db;
+    private WeatherServiceInterface weatherService;
 
-    public App(String token) {
-        super(token);
+    public App(WeatherServiceInterface weatherService) {
+        super(api_key);
         db = new DatabaseAccess();
+        this.weatherService = weatherService;
 
     }
 
     public static void main(String[] args) {
         System.out.println("Bot has started");
         try {
-            App app = new App(api_key);
+            App app = new App(new WeatherService());
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
             botsApi.registerBot(app);
 
@@ -57,14 +52,13 @@ public class App extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         if (!isActive) {
-            System.out.println("Active: " + isActive);
+            System.out.println("Bot is: " + isActive);
             return;
         }
         Message message = update.getMessage();
         long userId = message.getFrom().getId();
-        writeToFile("From: " + message.getFrom().getUserName() + " at: " + message.getDate() + " Message: "
+        writeToFile("From: " + message.getFrom().getUserName() + " at: " + new Date(message.getDate() * 1000L) + " Message: "
                 + message.getText());
-        //System.out.println("User id: " + userId);
 
         if (!(message.getText().contains("Owner"))) {
             if (message.getText().contains("/wetter")) {
@@ -96,15 +90,17 @@ public class App extends TelegramLongPollingBot {
                 sendMessage(createMessage(message, sb.toString()));
                 return;
             }
-            if (userOptions.get(userId).equals("wetter")) {
-                getWeather(update);
+            if (userOptions.get(userId) == "wetter") {
+                TownTemperatureData weatherData = weatherService.getWeatherData(update);
+                sendWeatherUpdate(weatherData, message);
+                //getWeather(update);
                 userOptions.remove(userId);
                 return;
-            } else if (userOptions.get(userId).equals("newTask")) {
+            } else if (userOptions.get(userId) == "newTask") {
                 db.addToDb(userId, message.getText());
                 userOptions.remove(userId);
                 return;
-            } else if (userOptions.get(userId).equals("deleteTask")) {
+            } else if (userOptions.get(userId) == "deleteTask") {
                 try {
                     db.deleteTask(userId, Integer.parseInt(message.getText()));
                     return;
@@ -116,8 +112,6 @@ public class App extends TelegramLongPollingBot {
                 return;
 
             }
-
-            System.out.println(update.getMessage().getText());
             setProperty(message.getText());
 
         } else if (update.getMessage().getText().contains("Owner")) {
@@ -127,50 +121,21 @@ public class App extends TelegramLongPollingBot {
 
     }
 
+    private void sendWeatherUpdate(TownTemperatureData weatherData, Message message) {
+        if (weatherData != null) {
+            SendMessage sm_2 = createMessage(message, "Stadt: " + weatherData.getTown() + " Temperatur: "
+                    + Double.toString(weatherData.getTemperature().getTemperature()));
+            sendMessage(sm_2);
+        } else {
+            sendNotFound(message);
+        }
+    }
+
     @Override
     public String getBotUsername() {
         return "Bot";
     }
 
-    public boolean sendOwner(Message message) {
-        SendMessage sm = SendMessage.builder().chatId(message.getFrom().getId()).text("Martin D.").build();
-        try {
-            execute(sm);
-            return true;
-        } catch (Exception e) {
-            System.out.println("Error");
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    public TownTemperatureData connection(String url) {
-        try {
-            if (url != null) {
-                URL urlWeather = new URI(url).toURL();
-                HttpURLConnection con = (HttpURLConnection) urlWeather.openConnection();
-                con.setRequestMethod("GET");
-                // System.out.println("Response code: " + con.getResponseCode());
-                if (con.getResponseCode() == 200) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
-                    // String line;
-                    /*
-                     * while(((line = reader.readLine()) != null)) { System.out.println("Line:" +
-                     * line); if(line.contains("temp_c"));{ System.out.println("Temperatur: " +
-                     * Double.parseDouble(line.split(":")[1])); break; } }
-                     */
-
-                    return extractData(reader);
-                } else {
-                    return null;
-                }
-            }
-            return null;
-        } catch (IOException | URISyntaxException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
 
     private static void writeToFile(String content) {
         FileWriter fw;
@@ -195,7 +160,6 @@ public class App extends TelegramLongPollingBot {
         try {
             execute(message);
         } catch (Exception e) {
-            System.out.println("Error:");
             e.printStackTrace();
         }
     }
@@ -204,57 +168,22 @@ public class App extends TelegramLongPollingBot {
         try {
             execute(createMessage(message, notFound));
         } catch (Exception e) {
-            System.out.println("Error:");
             e.printStackTrace();
         }
     }
 
-    private TownTemperatureData extractData(BufferedReader reader) {
-        String[] lines;
+
+
+
+    public boolean sendOwner(Message message) {
+        SendMessage sm = SendMessage.builder().chatId(message.getFrom().getId()).text("Martin D.").build();
         try {
-            lines = reader.readLine().split("},");
-            String tempLine = "";
-            String townLine = "";
-            for (String string : lines) {
-                if (string.contains("temp_c")) {
-                    tempLine = string;
-                }
-                if (string.contains("name")) {
-                    townLine = string;
-                }
-            }
-            String town = extractTown(townLine);
-            Temperature temp = extractTemp(tempLine);
-            return new TownTemperatureData(town, temp);
-        } catch (IOException e) {
+            execute(sm);
+            return true;
+        } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
-        return null;
-    }
-
-    private Temperature extractTemp(String line) {
-        if (line != null) {
-            String[] splitLines = line.split(",");
-            for (String string : splitLines) {
-                if (string.contains("temp_c")) {
-                    return new Temperature(Double.parseDouble(string.split(":")[1]));
-                }
-            }
-        }
-        return null;
-    }
-
-    private String extractTown(String line) {
-        if (line != null) {
-            String[] splitLines = line.split(",");
-            for (String string : splitLines) {
-                if (string.contains("name")) {
-                    String town = string.split(":\"")[1].replaceAll("\"", "").replace(",", "");
-                    return town;
-                }
-            }
-        }
-        return null;
     }
 
     public void setProperty(String text) {
@@ -273,23 +202,5 @@ public class App extends TelegramLongPollingBot {
 
     public void changeActive(boolean active) {
         this.isActive = active;
-        //System.out.println("isActive: " + isActive);
-    }
-
-    public void getWeather(Update update) {
-        String inputTown = update.getMessage().getText().replaceAll("ä", "ae").replaceAll("ö", "oe")
-                .replaceAll("ü", "ue").replaceAll(" ", "_");
-        String tempUrl = url + inputTown.trim();
-        tempUrl += "&key=" + weather_api_key;
-        TownTemperatureData tempTownData = connection(tempUrl);
-        Message message = update.getMessage();
-        if (tempTownData != null) {
-            SendMessage sm_2 = createMessage(message, "Stadt: " + tempTownData.getTown() + " Temperatur: "
-                    + Double.toString(tempTownData.getTemperature().getTemperature()));
-            sendMessage(sm_2);
-        } else {
-            sendNotFound(message);
-        }
-
     }
 }

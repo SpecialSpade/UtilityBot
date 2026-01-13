@@ -17,15 +17,24 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+
 public class UserInterface extends Application implements PropertyChangeListener {
-    private static final String api_key = "8513567387:AAG6RKhUrHVnl_4Ep4lZTRzVzhxpXK0pbb0";
-    private App app = new App(api_key);
+    private App app;
     private boolean isActive = false;
     private boolean initiated = false;
     TextArea textArea = new TextArea();
 
+    public UserInterface(){
+
+        app = new App(new WeatherService());
+    }
+
     public static void main(String[] args) {
         launch(UserInterface.class);
+    }
+
+    public void start(String[] args){
+        Application.launch(UserInterface.class);
     }
 
     @Override
