@@ -1,4 +1,4 @@
-package testgroupz.utilitybot;
+package specialspade.utilitybot;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -52,10 +52,10 @@ public class UserInterface extends Application implements PropertyChangeListener
                 System.out.println("Registration failed!");
             }
         }
-        textArea.appendText("UI gestartet\n");
-        Button buttonStart = new Button("Bot starten");
+        textArea.appendText("UI started\n");
+        Button buttonStart = new Button("Start bot");
         buttonStart.setPrefWidth(100);
-        Button buttonEnd = new Button("Bot beenden");
+        Button buttonEnd = new Button("Stop bot");
         buttonEnd.setPrefWidth(100);
         VBox buttons = new VBox();
         buttons.setStyle("-fx-background-color: #FF0000");

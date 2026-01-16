@@ -1,4 +1,4 @@
-package testgroupz.utilitybot;
+package specialspade.utilitybot;
 
 public class Temperature {
 

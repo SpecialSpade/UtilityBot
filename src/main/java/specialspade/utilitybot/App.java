@@ -1,4 +1,4 @@
-package testgroupz.utilitybot;
+package specialspade.utilitybot;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -19,14 +19,14 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 public class App extends TelegramLongPollingBot {
 
     private static String api_key = System.getenv("TELEGRAM_API_KEY");
-    private String notFound = "Stadt nicht gefunden";
+    private String notFound = "Town not found";
     private PropertyChangeSupport changes = new PropertyChangeSupport(this);
     private String currentText = "";
     private boolean isActive = true;
     private HashMap<Long, String> userOptions = new HashMap<>();
-    final String enterCity = "Geben sie die Stadt ein!";
-    final String enterNewTask = "Geben sie eine neue Task ein!";
-    final String enterTaskId = "Geben sie die TaskID zum Löschen ein!";
+    final String enterCity = "Input a city name!";
+    final String enterNewTask = "Input a task to add!";
+    final String enterTaskId = "Input ID of task for deletion!";
     private DatabaseAccess db;
     private WeatherServiceInterface weatherService;
 
@@ -63,24 +63,24 @@ public class App extends TelegramLongPollingBot {
         if (!(message.getText().contains("Owner"))) {
             if (message.getText().contains("/wetter")) {
                 userOptions.put(userId, "wetter");
-                setProperty("Wetter gestartet");
+                setProperty("Weather started");
                 sendMessage(createMessage(message, enterCity));
                 return;
             } else if (message.getText().contains("/task_new")) {
                 userOptions.put(userId, "newTask");
-                setProperty("Neue Task gestartet");
+                setProperty("New task started");
                 sendMessage(createMessage(message, enterNewTask));
                 return;
             } else if (message.getText().contains("/task_delete")) {
                 userOptions.put(userId, "deleteTask");
-                setProperty("Task löschen gestartet");
+                setProperty("Task deletion started");
                 sendMessage(createMessage(message, enterTaskId));
                 return;
             } else if (message.getText().contains("/tasks_list")) {
                 HashMap<Long, String> map = db.listTasks(userId);
-                setProperty("Tasks auflisten");
+                setProperty("List tasks");
                 if (map == null || map.isEmpty()) {
-                    sendMessage(createMessage(message, "Keine tasks"));
+                    sendMessage(createMessage(message, "No tasks"));
                     return;
                 }
                 StringBuilder sb = new StringBuilder();
@@ -123,7 +123,7 @@ public class App extends TelegramLongPollingBot {
 
     private void sendWeatherUpdate(TownTemperatureData weatherData, Message message) {
         if (weatherData != null) {
-            SendMessage sm_2 = createMessage(message, "Stadt: " + weatherData.getTown() + " Temperatur: "
+            SendMessage sm_2 = createMessage(message, "Town: " + weatherData.getTown() + " Temperature: "
                     + Double.toString(weatherData.getTemperature().getTemperature()));
             sendMessage(sm_2);
         } else {
@@ -133,7 +133,7 @@ public class App extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return "Bot";
+        return "UtilityBot";
     }
 
 

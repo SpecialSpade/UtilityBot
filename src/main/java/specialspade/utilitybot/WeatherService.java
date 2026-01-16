@@ -1,6 +1,5 @@
-package testgroupz.utilitybot;
+package specialspade.utilitybot;
 
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 
@@ -11,6 +10,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+
 
 public class WeatherService implements WeatherServiceInterface {
 

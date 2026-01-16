@@ -1,4 +1,4 @@
-package testgroupz.utilitybot;
+package specialspade.utilitybot;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
