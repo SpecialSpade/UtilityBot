@@ -2,3 +2,4 @@ This is a Telegram Bot written in Java. It offers a temperature query feature wh
 few seconds.
 Requires an API-Key from Telegram named "TELEGRAM_API_KEY" and a <https://www.weatherapi.com/> API-Key named "WEATHER_API_KEY" as enviromental variables.
     On Windows in a commandline: set TELEGRAM_API_KEY={your_key}
+Then you can run the jar with: "java -jar UtilityBot_version.jar"
