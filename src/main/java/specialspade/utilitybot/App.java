@@ -1,5 +1,12 @@
 package specialspade.utilitybot;
 
+import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.TelegramBotsApi;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
+
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.BufferedWriter;
@@ -9,38 +16,30 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.meta.TelegramBotsApi;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
-
-public class App extends TelegramLongPollingBot {
+public class App extends TelegramLongPollingBot implements AppInterface{
 
     private static String api_key = System.getenv("TELEGRAM_API_KEY");
-    private String notFound = "Town not found";
     private PropertyChangeSupport changes = new PropertyChangeSupport(this);
     private String currentText = "";
+    private String notFound = "Town not found";
     private boolean isActive = true;
     private HashMap<Long, String> userOptions = new HashMap<>();
-    final String enterCity = "Input a city name!";
-    final String enterNewTask = "Input a task to add!";
-    final String enterTaskId = "Input ID of task for deletion!";
     private DatabaseAccess db;
     private WeatherServiceInterface weatherService;
+    private MessageProcessorInterface messageProcessor;
 
-    public App(WeatherServiceInterface weatherService) {
+    public App(WeatherServiceInterface weatherService, MessageProcessorInterface messageProcessor) {
         super(api_key);
         db = new DatabaseAccess();
         this.weatherService = weatherService;
+        this.messageProcessor = messageProcessor;
 
     }
 
     public static void main(String[] args) {
         System.out.println("Bot has started");
         try {
-            App app = new App(new WeatherService());
+            App app = new App(new WeatherService(), new MessageProcessor());
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
             botsApi.registerBot(app);
 
@@ -55,73 +54,11 @@ public class App extends TelegramLongPollingBot {
             System.out.println("Bot is: " + isActive);
             return;
         }
-        Message message = update.getMessage();
-        long userId = message.getFrom().getId();
-        writeToFile("From: " + message.getFrom().getUserName() + " at: " + new Date(message.getDate() * 1000L) + " Message: "
-                + message.getText());
-
-        if (!(message.getText().contains("Owner"))) {
-            if (message.getText().contains("/wetter")) {
-                userOptions.put(userId, "wetter");
-                setProperty("Weather started");
-                sendMessage(createMessage(message, enterCity));
-                return;
-            } else if (message.getText().contains("/task_new")) {
-                userOptions.put(userId, "newTask");
-                setProperty("New task started");
-                sendMessage(createMessage(message, enterNewTask));
-                return;
-            } else if (message.getText().contains("/task_delete")) {
-                userOptions.put(userId, "deleteTask");
-                setProperty("Task deletion started");
-                sendMessage(createMessage(message, enterTaskId));
-                return;
-            } else if (message.getText().contains("/tasks_list")) {
-                HashMap<Long, String> map = db.listTasks(userId);
-                setProperty("List tasks");
-                if (map == null || map.isEmpty()) {
-                    sendMessage(createMessage(message, "No tasks"));
-                    return;
-                }
-                StringBuilder sb = new StringBuilder();
-                for (Map.Entry<Long, String> entry : map.entrySet()) {
-                    sb.append(entry.getKey().toString() + ": " + entry.getValue() + "\n");
-                }
-                sendMessage(createMessage(message, sb.toString()));
-                return;
-            }
-            if (userOptions.get(userId) == "wetter") {
-                TownTemperatureData weatherData = weatherService.getWeatherData(update);
-                sendWeatherUpdate(weatherData, message);
-                //getWeather(update);
-                userOptions.remove(userId);
-                return;
-            } else if (userOptions.get(userId) == "newTask") {
-                db.addToDb(userId, message.getText());
-                userOptions.remove(userId);
-                return;
-            } else if (userOptions.get(userId) == "deleteTask") {
-                try {
-                    db.deleteTask(userId, Integer.parseInt(message.getText()));
-                    return;
-                } catch (NumberFormatException e) {
-                    e.printStackTrace();
-                }
-                db.deleteTask(userId, message.getText());
-                userOptions.remove(userId);
-                return;
-
-            }
-            setProperty(message.getText());
-
-        } else if (update.getMessage().getText().contains("Owner")) {
-            sendOwner(message);
-
-        }
+        messageProcessor.process(update, this);
 
     }
 
-    private void sendWeatherUpdate(TownTemperatureData weatherData, Message message) {
+    public void sendWeatherUpdate(TownTemperatureData weatherData, Message message) {
         if (weatherData != null) {
             SendMessage sm_2 = createMessage(message, "Town: " + weatherData.getTown() + " Temperature: "
                     + Double.toString(weatherData.getTemperature().getTemperature()));
@@ -137,7 +74,7 @@ public class App extends TelegramLongPollingBot {
     }
 
 
-    private static void writeToFile(String content) {
+    public void writeToFile(String content) {
         FileWriter fw;
         try {
             fw = new FileWriter("./log.txt", true);
@@ -151,12 +88,12 @@ public class App extends TelegramLongPollingBot {
         }
     }
 
-    private SendMessage createMessage(Message message, String text) {
+    public SendMessage createMessage(Message message, String text) {
         //SendMessage sm = new SendMessage().builder().chatId(message.getFrom().getId()).text(text).build();
         return SendMessage.builder().chatId(message.getFrom().getId()).text(text).build();
     }
 
-    private void sendMessage(SendMessage message) {
+    public void sendMessage(SendMessage message) {
         try {
             execute(message);
         } catch (Exception e) {
@@ -164,25 +101,26 @@ public class App extends TelegramLongPollingBot {
         }
     }
 
-    private void sendNotFound(Message message) {
+    public void sendNotFound(Message message) {
         try {
             execute(createMessage(message, notFound));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+    //Only for testing
+    public void writeToFilePublic(String content){
+        this.writeToFile(content);
+    }
 
 
 
-
-    public boolean sendOwner(Message message) {
+    public void sendOwner(Message message) {
         SendMessage sm = SendMessage.builder().chatId(message.getFrom().getId()).text("Martin D.").build();
         try {
             execute(sm);
-            return true;
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
         }
     }
 
@@ -190,6 +128,19 @@ public class App extends TelegramLongPollingBot {
         String oldValue = this.currentText;
         this.currentText = text;
         changes.firePropertyChange("New Text", oldValue, text);
+    }
+
+    public void addToDb(long id, String task){
+        db.addToDb(id, task);
+    }
+    public void deleteTask(long id, int taskId) {
+        db.deleteTask(id, taskId);
+    }
+    public void deleteTask(long id, String taskName){
+        db.deleteTask(id, taskName);
+    }
+    public HashMap<Long, String> listTasks(long id){
+        return db.listTasks(id);
     }
 
     public void addPropertyChangeListener(PropertyChangeListener l) {
@@ -202,5 +153,10 @@ public class App extends TelegramLongPollingBot {
 
     public void changeActive(boolean active) {
         this.isActive = active;
+    }
+
+    @Override
+    public TownTemperatureData getWeatherData(Update update) {
+        return weatherService.getWeatherData(update);
     }
 }

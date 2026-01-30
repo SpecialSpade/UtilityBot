@@ -26,7 +26,7 @@ public class UserInterface extends Application implements PropertyChangeListener
 
     public UserInterface(){
 
-        app = new App(new WeatherService());
+        app = new App(new WeatherService(), new MessageProcessor());
     }
 
     public static void main(String[] args) {
