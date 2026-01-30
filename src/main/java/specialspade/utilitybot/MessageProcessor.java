@@ -24,7 +24,7 @@ public class MessageProcessor implements MessageProcessorInterface{
                 + message.getText());
 
         if (!(message.getText().contains("Owner"))) {
-            if (message.getText().contains("/wetter")) {
+            if (message.getText().contains("/weather")) {
                 userOptions.put(userId, "wetter");
                 app.setProperty("Weather started");
                 app.sendMessage(app.createMessage(message, enterCity));
