@@ -1,6 +1,8 @@
-package specialspade.utilitybot;
+package specialspade.utilitybot.Application.Weather;
 
 import org.telegram.telegrambots.meta.api.objects.Update;
+import specialspade.utilitybot.Application.TemperatureData.Temperature;
+import specialspade.utilitybot.Application.TemperatureData.TownTemperatureData;
 
 
 import java.io.BufferedReader;
@@ -14,15 +16,15 @@ import java.net.URL;
 
 public class WeatherService implements WeatherServiceInterface {
 
-    private String weather_api_key = System.getenv("WEATHER_API_KEY");
-    private StringBuilder url = new StringBuilder("https://api.weatherapi.com/v1/current.json?q=");
+    private final String weather_api_key = System.getenv("WEATHER_API_KEY");
+    private final StringBuilder url = new StringBuilder("https://api.weatherapi.com/v1/current.json?q=");
 
     @Override
     public TownTemperatureData getWeatherData(Update update) {
         return getWeather(update);
     }
 
-    private TownTemperatureData extractData(BufferedReader reader) {
+    private TownTemperatureData extractTownNameForTemperatureInC(BufferedReader reader) {
         String[] lines;
         try {
             lines = reader.readLine().split("},");
@@ -37,15 +39,15 @@ public class WeatherService implements WeatherServiceInterface {
                 }
             }
             String town = extractTown(townLine);
-            Temperature temp = extractTemp(tempLine);
-            return new TownTemperatureData(town, temp);
+            Temperature temperature = extractTempInC(tempLine);
+            return new TownTemperatureData(town, temperature);
         } catch (IOException e) {
             e.printStackTrace();
         }
         return null;
     }
 
-    private Temperature extractTemp(String line) {
+    private Temperature extractTempInC(String line) {
         if (line != null) {
             String[] splitLines = line.split(",");
             for (String string : splitLines) {
@@ -75,12 +77,12 @@ public class WeatherService implements WeatherServiceInterface {
                 .replaceAll("ü", "ue").replaceAll(" ", "_");
         String tempUrl = url + inputTown.trim();
         tempUrl += "&key=" + weather_api_key;
-        TownTemperatureData tempTownData = connection(tempUrl);
+        TownTemperatureData tempTownData = fetchWeatherDataFromApi(tempUrl);
         return tempTownData;
 
     }
 
-    public TownTemperatureData connection(String url) {
+    public TownTemperatureData fetchWeatherDataFromApi(String url) {
         try {
             if (url != null) {
                 URL urlWeather = new URI(url).toURL();
@@ -89,7 +91,7 @@ public class WeatherService implements WeatherServiceInterface {
                 if (con.getResponseCode() == 200) {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(con.getInputStream()));
 
-                    return extractData(reader);
+                    return extractTownNameForTemperatureInC(reader);
                 } else {
                     return null;
                 }

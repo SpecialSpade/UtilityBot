@@ -1,4 +1,4 @@
-package specialspade.utilitybot;
+package specialspade.utilitybot.Application.UserInterface;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -16,17 +16,17 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import specialspade.utilitybot.Application.Application.App;
 
 
 public class UserInterface extends Application implements PropertyChangeListener {
-    private App app;
+    private final App app;
     private boolean isActive = false;
     private boolean initiated = false;
-    TextArea textArea = new TextArea();
+    private final TextArea textArea = new TextArea();
 
     public UserInterface(){
-
-        app = new App(new WeatherService(), new MessageProcessor());
+        app = new App();
     }
 
     public static void main(String[] args) {
@@ -41,16 +41,7 @@ public class UserInterface extends Application implements PropertyChangeListener
     public void start(Stage window) {
         if (!initiated) {
             textArea.setEditable(false);
-            try {
-                textArea.appendText("Start registration\n");
-                TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-                botsApi.registerBot(app);
-                textArea.appendText("Registration successful\n");
-                initiated = true;
-
-            } catch (TelegramApiException e) {
-                System.out.println("Registration failed!");
-            }
+            registerBot();
         }
         textArea.appendText("UI started\n");
         Button buttonStart = new Button("Start bot");
@@ -93,9 +84,27 @@ public class UserInterface extends Application implements PropertyChangeListener
         window.show();
     }
 
+    private void registerBot() {
+        try {
+            propertyChange(new PropertyChangeEvent(this, "Registration_start", false,
+                    "Registration started."));
+            TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
+            botsApi.registerBot(app);
+
+            //textArea.appendText("Registration successful\n");
+            initiated = true;
+            propertyChange(new PropertyChangeEvent(this, "Registration_successful", false,
+                    "Registration successful."));
+        } catch (TelegramApiException e) {
+            //System.out.println("Registration failed!");
+            propertyChange(new PropertyChangeEvent(this, "Registration_failed", false,
+                    "Registration failed."));
+
+        }
+    }
+
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         textArea.appendText(evt.getNewValue() + "\n");
     }
-
 }

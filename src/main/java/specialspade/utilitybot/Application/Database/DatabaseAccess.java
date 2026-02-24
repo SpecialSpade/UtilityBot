@@ -1,4 +1,4 @@
-package specialspade.utilitybot;
+package specialspade.utilitybot.Application.Database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -31,7 +31,7 @@ public class DatabaseAccess {
 
     }
 
-    public HashMap<Long, String> listTasks(long id) {
+    public HashMap<Long, String> listTasks(long id) throws SQLException{
         try (Connection connection = DriverManager.getConnection("jdbc:sqlite:tasks.db");
              Statement statement = connection.createStatement()) {
             ResultSet rs = connection.getMetaData().getTables(null, null, "tasks", null);
@@ -46,8 +46,7 @@ public class DatabaseAccess {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
+            throw new SQLException(e);
         }
         return null;
     }
