@@ -1,4 +1,4 @@
-package specialspade.utilitybot;
+package specialspade.utilitybot.Application.TemperatureData;
 
 public class Temperature {
 
