@@ -1,10 +1,6 @@
 package specialspade.utilitybot.Application.Database;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.HashMap;
 
 public class DatabaseAccess {
@@ -14,16 +10,24 @@ public class DatabaseAccess {
         if (task == null) {
             return;
         }
-        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:./tasks.db");
-             Statement statement = connection.createStatement()) {
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:./tasks.db")) {
             ResultSet rs = connection.getMetaData().getTables(null, null, "tasks", null);
+            String sql = "INSERT INTO tasks (userid, task) VALUES (?, ?)";
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1, Long.toString(id));
+            preparedStatement.setString(2, task);
             if (rs.next()) {
-                String sql = "INSERT INTO tasks (userid, task) VALUES (" + id + ", \"" + task + "\");";
-                statement.executeUpdate(sql);
+                preparedStatement.executeUpdate();
             } else {
-                statement.executeUpdate("CREATE TABLE tasks (userid INTEGER NOT NULL, "
-                        + "task STRING NOT NULL, taskID INTEGER PRIMARY KEY AUTOINCREMENT)");
-                statement.execute("INSERT INTO tasks (userid, task) VALUES (" + id + ", " + task);
+                String newDb = "CREATE TABLE tasks (userid INTEGER NOT NULL, "
+                        + "task STRING NOT NULL, taskID INTEGER PRIMARY KEY AUTOINCREMENT)";
+                preparedStatement = connection.prepareStatement(newDb);
+                preparedStatement.execute();
+                String insertNewTask = "INSERT INTO tasks (userid, task) VALUES (?,?)";
+                preparedStatement = connection.prepareStatement(insertNewTask);
+                preparedStatement.setString(1, Long.toString(id));
+                preparedStatement.setString(2, task);
+                preparedStatement.execute();
             }
         } catch (SQLException e) {
             e.printStackTrace(System.err);
@@ -32,12 +36,13 @@ public class DatabaseAccess {
     }
 
     public HashMap<Long, String> listTasks(long id) throws SQLException{
-        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:tasks.db");
-             Statement statement = connection.createStatement()) {
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:tasks.db")){
+            String sqlStatement = "SELECT * FROM tasks WHERE userid = ?";
+            PreparedStatement preparedStatement = connection.prepareStatement(sqlStatement);
+            preparedStatement.setString(1, Long.toString(id));
             ResultSet rs = connection.getMetaData().getTables(null, null, "tasks", null);
             if (rs.next()) {
-                statement.execute("SELECT * FROM tasks WHERE userid = " + id);
-                ResultSet result = statement.executeQuery("SELECT * FROM tasks WHERE userid = " + id);
+                ResultSet result = preparedStatement.executeQuery();
                 HashMap<Long, String> resultMap = new HashMap<>();
                 while (result.next()) {
                     resultMap.put(result.getLong("taskID"), result.getString("task"));
@@ -52,31 +57,37 @@ public class DatabaseAccess {
     }
 
 
-    public void deleteTask(long id, int taskId) {
-        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:tasks.db");
-             Statement statement = connection.createStatement()) {
+    public int deleteTask(long id, int taskId) {
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:tasks.db")){
+            String sqlCommand = "DELETE FROM tasks WHERE userid = ? AND taskID = ?";
+            PreparedStatement preparedStatement = connection.prepareStatement(sqlCommand);
+            preparedStatement.setString(1, Long.toString(id));
+            preparedStatement.setString(2, Integer.toString(taskId));
             ResultSet rs = connection.getMetaData().getTables(null, null, "tasks", null);
             if (rs.next()) {
-                String sql = "DELETE FROM tasks WHERE userid = " + id + " AND taskID = " + taskId + ";";
-                statement.executeUpdate(sql);
+                return preparedStatement.executeUpdate();
             }
 
         } catch (SQLException e) {
             e.printStackTrace(System.err);
         }
+        return 0;
     }
 
-    public void deleteTask(long id, String taskName) {
-        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:tasks.db");
-             Statement statement = connection.createStatement()) {
+    public int deleteTask(long id, String taskName) {
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:tasks.db")) {
             ResultSet rs = connection.getMetaData().getTables(null, null, "tasks", null);
+            String sqlCommand = "DELETE FROM tasks WHERE userid = ? AND task = ?";
+            PreparedStatement preparedStatement = connection.prepareStatement(sqlCommand);
+            preparedStatement.setString(1, Long.toString(id));
+            preparedStatement.setString(2, taskName);
             if (rs.next()) {
-                String sql = "DELETE FROM tasks WHERE userid = " + id + " AND task = \"" + taskName + "\";";
-                statement.executeUpdate(sql);
+                return preparedStatement.executeUpdate();
             }
 
         } catch (SQLException e) {
             e.printStackTrace(System.err);
         }
+        return 0;
     }
 }

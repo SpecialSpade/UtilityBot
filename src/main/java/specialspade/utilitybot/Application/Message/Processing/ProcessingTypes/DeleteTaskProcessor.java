@@ -12,11 +12,13 @@ public class DeleteTaskProcessor implements ProcessorInterface {
     public Object process(Update update, AppInterface app, Map<Long, String> userOptions) {
         try{
             int toDelete = Integer.parseInt(update.getMessage().getText());
-            app.deleteTaskFromDb(update.getMessage().getChatId(), toDelete);
+            int result = app.deleteTaskFromDb(update.getMessage().getChatId(), toDelete);
+            return result == 0 ? "Task not deleted" :  "Task deleted";
         } catch (NumberFormatException e) {
-            app.deleteTaskFromDb(update.getMessage().getFrom().getId(), update.getMessage().getText());
+            int result = app.deleteTaskFromDb(update.getMessage().getFrom().getId(), update.getMessage().getText());
+            return result == 0 ? "Task not deleted" : "Task deleted";
+
         }
-        return "Task deleted";
 
     }
 

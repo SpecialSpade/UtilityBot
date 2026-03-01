@@ -178,11 +178,11 @@ public class App extends TelegramLongPollingBot implements AppInterface {
     public void addToDb(long id, String task){
         databaseAccess.addToDb(id, task);
     }
-    public void deleteTaskFromDb(long id, int taskId) {
-        databaseAccess.deleteTask(id, taskId);
+    public int deleteTaskFromDb(long id, int taskId) {
+        return databaseAccess.deleteTask(id, taskId);
     }
-    public void deleteTaskFromDb(long id, String taskName){
-        databaseAccess.deleteTask(id, taskName);
+    public int deleteTaskFromDb(long id, String taskName){
+        return databaseAccess.deleteTask(id, taskName);
     }
     public HashMap<Long, String> listAllTasksUser(long id){
         try{
@@ -202,7 +202,6 @@ public class App extends TelegramLongPollingBot implements AppInterface {
 
     public void changeActive(boolean active) {
         this.botIsActive = active;
-        System.out.println("Active is true");
     }
 
     @Override
