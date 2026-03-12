@@ -9,7 +9,7 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import specialspade.utilitybot.Application.Database.DatabaseAccess;
 import specialspade.utilitybot.Application.Message.Processing.MessageProcessor;
 import specialspade.utilitybot.Application.Message.Processing.MessageValidator;
-import specialspade.utilitybot.Application.Message.Processing.Preprocessing.MessagePreprocessor;
+import specialspade.utilitybot.Application.Message.Processing.Preprocessing.UpdateProcessor;
 import specialspade.utilitybot.Application.Message.Processing.ProcessingTypes.*;
 import specialspade.utilitybot.Application.Message.MessageTypes.*;
 import specialspade.utilitybot.Application.TemperatureData.TownTemperatureData;
@@ -32,13 +32,13 @@ public class App extends TelegramLongPollingBot implements AppInterface {
     private boolean botIsActive = false;
     private final DatabaseAccess databaseAccess;
     private final WeatherServiceInterface weatherService;
-    private final MessagePreprocessor preprocessor;
+    private final UpdateProcessor preprocessor;
 
     public App() {
         super(api_key);
         databaseAccess = new DatabaseAccess();
         this.weatherService = new WeatherService();
-        this.preprocessor = new MessagePreprocessor(this, initMessageValidator(), initMessageProcessorFactory(), initResponses());
+        this.preprocessor = new UpdateProcessor(this, initMessageValidator(), initMessageProcessorFactory(), initResponses());
 
 
     }
@@ -79,9 +79,7 @@ public class App extends TelegramLongPollingBot implements AppInterface {
     }
 
     public void writeToLogFileFromUser(Message message) {
-        FileWriter fileWriter;
-        try {
-            fileWriter = new FileWriter("./src/main/resources/log.txt", true);
+        try (FileWriter fileWriter = new FileWriter("./src/main/resources/log.txt", true)){
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
             String text = "From: " + message.getFrom().getUserName() + " at: " + createDate(message.getDate()) +
                     " Message: " + message.getText();
@@ -94,9 +92,7 @@ public class App extends TelegramLongPollingBot implements AppInterface {
     }
 
     public void writeToLogFileToUser(String content, Message message){
-        FileWriter fileWriter;
-        try {
-            fileWriter = new FileWriter("./src/main/resources/log.txt", true);
+        try (FileWriter fileWriter = new FileWriter("./src/main/resources/log.txt", true)){
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
             String text = "To: " + message.getFrom().getUserName() + " at: " + createDate(message.getDate()) +
                     " Message: " + content;
@@ -109,9 +105,7 @@ public class App extends TelegramLongPollingBot implements AppInterface {
     }
 
     public void writeToLogFileTemperature(TownTemperatureData temperatureData, Message message){
-        FileWriter fileWriter;
-        try {
-            fileWriter = new FileWriter("./src/main/resources/log.txt", true);
+        try (FileWriter fileWriter = new FileWriter("./src/main/resources/log.txt", true)){
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
             String text =  "To: " + message.getFrom().getUserName() + " at:  " + createDate(message.getDate()) +
                     " Town: " + temperatureData.getTown() + ". Temperature: " + temperatureData.getTemperatureData();
@@ -124,9 +118,7 @@ public class App extends TelegramLongPollingBot implements AppInterface {
     }
 
     private void writeToLogFileException(String message){
-        FileWriter fileWriter;
-        try {
-            fileWriter = new FileWriter("./src/main/resources/log.txt", true);
+        try (FileWriter fileWriter = new FileWriter("./src/main/resources/log.txt", true)){
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
             String text =  "Exception occured. " + message;
             bufferedWriter.write(text);

@@ -11,17 +11,16 @@ import specialspade.utilitybot.Application.TemperatureData.TownTemperatureData;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MessagePreprocessor implements MessagePreprocessorInterface {
+public class UpdateProcessor implements UpdateProcessorInterface {
 
     private final HashMap<Long, String> userOptions = new HashMap<>();
-    private final Map<String, String> responses;
 
+    private final Map<String, String> responses;
     private final MessageValidator messageValidator;
     private final MessageProcessor processor;
-
     private final AppInterface app;
 
-    public MessagePreprocessor(AppInterface app, MessageValidator messageValidator, MessageProcessor processor, Map<String, String> responses) {
+    public UpdateProcessor(AppInterface app, MessageValidator messageValidator, MessageProcessor processor, Map<String, String> responses) {
         this.messageValidator = messageValidator;
         this.processor = processor;
         this.responses = responses;
@@ -37,10 +36,9 @@ public class MessagePreprocessor implements MessagePreprocessorInterface {
         if (userOptions.containsKey(userId)) {
             Object result = processor.processUpdate(update, app, userOptions);
             if (result instanceof String) {
-                MessageSender messageSender = new MessageSender();
                 app.writeToLogFileToUser(result.toString(), message);
                 app.setProperty(userOptions.get(userId) + " started.");
-                messageSender.sendMessage(update.getMessage(), app, (String) result);
+                sendMessageToUser(update, (String) result);
             } else if (result instanceof TownTemperatureData) {
                 app.sendWeatherUpdate((TownTemperatureData) result, message);
                 app.setProperty(userOptions.get(userId) +  " started.");
@@ -55,11 +53,15 @@ public class MessagePreprocessor implements MessagePreprocessorInterface {
 
         } else if (messageValidator.canCreateMessage(message.getText())) {
             messageValidator.writeToUserOptions(userId, message, userOptions);
-            MessageSender messageSender = new MessageSender();
-            messageSender.sendMessage(update.getMessage(), app, responses.get(userOptions.get(userId)));
+            sendMessageToUser(update, responses.get(userOptions.get(userId)));
             app.writeToLogFileToUser(responses.get(userOptions.get(userId)), update.getMessage());
         }
 
+    }
+
+    private void sendMessageToUser(Update update, String message) {
+        MessageSender messageSender = new MessageSender();
+        messageSender.sendMessage(update.getMessage(), app, message);
     }
 
     private void sendImmediateResponse(Update update, Object result) {

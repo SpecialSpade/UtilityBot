@@ -1,12 +1,12 @@
 package specialspade.utilitybot;
 
 
-import specialspade.utilitybot.Application.UserInterface.UserInterface;
+import specialspade.utilitybot.Application.UserInterface.GraphicalUserInterface;
 
 public class Main {
     public static void main(String[] args) {
 
-        UserInterface.main(args);
+        GraphicalUserInterface.main(args);
 
     }
 }
