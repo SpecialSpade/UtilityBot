@@ -9,7 +9,7 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import specialspade.utilitybot.Application.Database.DatabaseAccess;
 import specialspade.utilitybot.Application.Message.Processing.MessageProcessor;
 import specialspade.utilitybot.Application.Message.Processing.MessageValidator;
-import specialspade.utilitybot.Application.Message.Processing.Preprocessing.MessagePreprocessor;
+import specialspade.utilitybot.Application.Message.Processing.Preprocessing.UpdateProcessor;
 import specialspade.utilitybot.Application.Message.Processing.ProcessingTypes.*;
 import specialspade.utilitybot.Application.Message.MessageTypes.*;
 import specialspade.utilitybot.Application.TemperatureData.TownTemperatureData;
@@ -32,13 +32,13 @@ public class App extends TelegramLongPollingBot implements AppInterface {
     private boolean botIsActive = false;
     private final DatabaseAccess databaseAccess;
     private final WeatherServiceInterface weatherService;
-    private final MessagePreprocessor preprocessor;
+    private final UpdateProcessor preprocessor;
 
     public App() {
         super(api_key);
         databaseAccess = new DatabaseAccess();
         this.weatherService = new WeatherService();
-        this.preprocessor = new MessagePreprocessor(this, initMessageValidator(), initMessageProcessorFactory(), initResponses());
+        this.preprocessor = new UpdateProcessor(this, initMessageValidator(), initMessageProcessorFactory(), initResponses());
 
 
     }
