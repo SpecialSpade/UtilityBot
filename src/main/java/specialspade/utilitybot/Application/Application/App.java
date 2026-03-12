@@ -79,9 +79,7 @@ public class App extends TelegramLongPollingBot implements AppInterface {
     }
 
     public void writeToLogFileFromUser(Message message) {
-        FileWriter fileWriter;
-        try {
-            fileWriter = new FileWriter("./src/main/resources/log.txt", true);
+        try (FileWriter fileWriter = new FileWriter("./src/main/resources/log.txt", true);){
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
             String text = "From: " + message.getFrom().getUserName() + " at: " + createDate(message.getDate()) +
                     " Message: " + message.getText();
@@ -94,9 +92,7 @@ public class App extends TelegramLongPollingBot implements AppInterface {
     }
 
     public void writeToLogFileToUser(String content, Message message){
-        FileWriter fileWriter;
-        try {
-            fileWriter = new FileWriter("./src/main/resources/log.txt", true);
+        try (FileWriter fileWriter = new FileWriter("./src/main/resources/log.txt", true);){
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
             String text = "To: " + message.getFrom().getUserName() + " at: " + createDate(message.getDate()) +
                     " Message: " + content;
@@ -109,9 +105,7 @@ public class App extends TelegramLongPollingBot implements AppInterface {
     }
 
     public void writeToLogFileTemperature(TownTemperatureData temperatureData, Message message){
-        FileWriter fileWriter;
-        try {
-            fileWriter = new FileWriter("./src/main/resources/log.txt", true);
+        try (FileWriter fileWriter = new FileWriter("./src/main/resources/log.txt", true);){
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
             String text =  "To: " + message.getFrom().getUserName() + " at:  " + createDate(message.getDate()) +
                     " Town: " + temperatureData.getTown() + ". Temperature: " + temperatureData.getTemperatureData();
@@ -124,9 +118,7 @@ public class App extends TelegramLongPollingBot implements AppInterface {
     }
 
     private void writeToLogFileException(String message){
-        FileWriter fileWriter;
-        try {
-            fileWriter = new FileWriter("./src/main/resources/log.txt", true);
+        try (FileWriter fileWriter = new FileWriter("./src/main/resources/log.txt", true);){
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
             String text =  "Exception occured. " + message;
             bufferedWriter.write(text);
