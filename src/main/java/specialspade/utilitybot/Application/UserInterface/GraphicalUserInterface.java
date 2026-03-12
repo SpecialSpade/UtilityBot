@@ -19,22 +19,22 @@ import javafx.stage.Stage;
 import specialspade.utilitybot.Application.Application.App;
 
 
-public class UserInterface extends Application implements PropertyChangeListener {
+public class GraphicalUserInterface extends Application implements PropertyChangeListener {
     private final App app;
     private boolean isActive = false;
     private boolean initiated = false;
     private final TextArea textArea = new TextArea();
 
-    public UserInterface(){
+    public GraphicalUserInterface(){
         app = new App();
     }
 
     public static void main(String[] args) {
-        launch(UserInterface.class);
+        launch(GraphicalUserInterface.class);
     }
 
     public void start(String[] args){
-        Application.launch(UserInterface.class);
+        Application.launch(GraphicalUserInterface.class);
     }
 
     @Override

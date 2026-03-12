@@ -5,7 +5,11 @@ import java.util.HashMap;
 
 public class DatabaseAccess {
 
-
+    /**
+     *
+     * @param id    UserId
+     * @param task  Task description
+     */
     public void addToDb(long id, String task) {
         if (task == null) {
             return;
@@ -35,9 +39,15 @@ public class DatabaseAccess {
 
     }
 
+    /**
+     *
+     * @param id UserId
+     * @return HashMap with the TaskId and the task description
+     * @throws SQLException If database access error occurs or called on a closed database.
+     */
     public HashMap<Long, String> listTasks(long id) throws SQLException{
+        String sqlStatement = "SELECT * FROM tasks WHERE userid = ?";
         try (Connection connection = DriverManager.getConnection("jdbc:sqlite:tasks.db")){
-            String sqlStatement = "SELECT * FROM tasks WHERE userid = ?";
             PreparedStatement preparedStatement = connection.prepareStatement(sqlStatement);
             preparedStatement.setString(1, Long.toString(id));
             ResultSet rs = connection.getMetaData().getTables(null, null, "tasks", null);
@@ -56,7 +66,12 @@ public class DatabaseAccess {
         return null;
     }
 
-
+    /**
+     *
+     * @param id userId
+     * @param taskId Id of task
+     * @return How many rows were deleted
+     */
     public int deleteTask(long id, int taskId) {
         try (Connection connection = DriverManager.getConnection("jdbc:sqlite:tasks.db")){
             String sqlCommand = "DELETE FROM tasks WHERE userid = ? AND taskID = ?";
@@ -74,6 +89,12 @@ public class DatabaseAccess {
         return 0;
     }
 
+    /**
+     *
+     * @param id userId
+     * @param taskName Name of task
+     * @return How many rows were deleted
+     */
     public int deleteTask(long id, String taskName) {
         try (Connection connection = DriverManager.getConnection("jdbc:sqlite:tasks.db")) {
             ResultSet rs = connection.getMetaData().getTables(null, null, "tasks", null);
