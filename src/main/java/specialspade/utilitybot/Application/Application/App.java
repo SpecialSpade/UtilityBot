@@ -81,8 +81,7 @@ public class App extends TelegramLongPollingBot implements AppInterface {
     public void writeToLogFileFromUser(Message message) {
         try (FileWriter fileWriter = new FileWriter("./src/main/resources/log.txt", true)){
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-            String text = "From: " + message.getFrom().getUserName() + " at: " + createDate(message.getDate()) +
-                    " Message: " + message.getText();
+            String text = "From: " + this.getTextFromMessage(message);
             bufferedWriter.write(text);
             bufferedWriter.newLine();
             bufferedWriter.close();
@@ -91,11 +90,15 @@ public class App extends TelegramLongPollingBot implements AppInterface {
         }
     }
 
+    private String getTextFromMessage(Message message){
+        return message.getFrom().getUserName() + " at: " + createDate(message.getDate()) +
+                " Message: " + message.getText();
+    }
+
     public void writeToLogFileToUser(String content, Message message){
         try (FileWriter fileWriter = new FileWriter("./src/main/resources/log.txt", true)){
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-            String text = "To: " + message.getFrom().getUserName() + " at: " + createDate(message.getDate()) +
-                    " Message: " + content;
+            String text = "To: " + this.getTextFromMessage(message) + content;
             bufferedWriter.write(text);
             bufferedWriter.newLine();
             bufferedWriter.close();
